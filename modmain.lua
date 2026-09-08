@@ -43,6 +43,7 @@ for _, v in ipairs({
     '_hp',
     '_light_range',
     -- '_intensity',
+    '_wander_range',
 }) do TUNING[string.upper('CONFIG_' .. modid .. v)] = GetModConfigData(modid .. v) end
 
 
@@ -247,18 +248,18 @@ end)
 --------------------------------------------------------------------------
 -- 修改非跟隨狀態的遊蕩範圍 (Brain Upvalue 修改)
 --------------------------------------------------------------------------
--- if WANDER_RADIUS ~= 10 then
---     local LightFlierBrain = require("brains/lightflierbrain")
+if TUNING[string.upper('CONFIG_' .. modid .. '_wander_range')] ~= 10 then
+    local LightFlierBrain = require("brains/lightflierbrain")
 
---     -- 使用 debug.getupvalue 找出 lightflierbrain 內的局部變量 MAX_WANDER_DIST 並修改
---     local idx = 1
---     while true do
---         local name, value = debug.getupvalue(LightFlierBrain.OnStart, idx)
---         if not name then break end
---         if name == "MAX_WANDER_DIST" then
---             debug.setupvalue(LightFlierBrain.OnStart, idx, WANDER_RADIUS)
---             break
---         end
---         idx = idx + 1
---     end
--- end
+    -- 使用 debug.getupvalue 找出 lightflierbrain 內的局部變量 MAX_WANDER_DIST 並修改
+    local idx = 1
+    while true do
+        local name, value = debug.getupvalue(LightFlierBrain.OnStart, idx)
+        if not name then break end
+        if name == "MAX_WANDER_DIST" then
+            debug.setupvalue(LightFlierBrain.OnStart, idx, TUNING[string.upper('CONFIG_' .. modid .. '_wander_range')])
+            break
+        end
+        idx = idx + 1
+    end
+end
