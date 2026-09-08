@@ -1,6 +1,7 @@
 ---@diagnostic disable: lowercase-global, undefined-global, trailing-space
 -- 本地化
 local op = { { 'A', 97 }, { 'B', 98 }, { 'C', 99 }, { 'D', 100 }, { 'E', 101 }, { 'F', 102 }, { 'G', 103 }, { 'H', 104 }, { 'I', 105 }, { 'J', 106 }, { 'K', 107 }, { 'L', 108 }, { 'M', 109 }, { 'N', 110 }, { 'O', 111 }, { 'P', 112 }, { 'Q', 113 }, { 'R', 114 }, { 'S', 115 }, { 'T', 116 }, { 'U', 117 }, { 'V', 118 }, { 'W', 119 }, { 'X', 120 }, { 'Y', 121 }, { 'Z', 122 }, { '0', 48 }, { '1', 49 }, { '2', 50 }, { '3', 51 }, { '4', 52 }, { '5', 53 }, { '6', 54 }, { '7', 55 }, { '8', 56 }, { '9', 57 } }
+
 local modid = 'betterlb'
 local LANGS = {
     ['zh'] = {
@@ -17,11 +18,37 @@ local LANGS = {
                 { 'English', 'en' }
             } },
             { '功能' },
-            -- {modid..'_dmgmult','伤害倍率','调整伤害倍率',1,{
-            --     {'0.5倍',0.5},
-            --     {'1倍',1},
-            --     {'2倍',2}
-            -- }}
+            { modid .. '_no_feed', '光蟲無需餵食', '', true, {
+                { '禁用', false },
+                { '啟用', true },
+            } },
+            { modid .. '_invincible', '光蟲無敵', '', true, {
+                { '禁用', false },
+                { '啟用', true },
+            } },
+            { modid .. '_hp', '光蟲血量', '调整光蟲血量', 25, {
+                { '25（原版）', 25 },
+                { '50', 50 },
+                { '100', 100 },
+                { '250', 250 },
+                { '500', 500 },
+                { '1000', 1000 },
+            } },
+            { modid .. '_light_range', '光蟲光照半徑', '调整光蟲照明半徑', 1, {
+                { '1x',   1 },
+                { '1.5x', 1.5 },
+                { '2x',   2 },
+                { '2.5x', 2.5 },
+                { '3x',   3 },
+            } },
+            { modid .. '_intensity', '光蟲亮度', '调整光蟲亮度', 0.5, {
+                { '0.5（原版）', 0.5 },
+                { '0.6', 0.6 },
+                { '0.7', 0.7 },
+                { '0.8', 0.8 },
+                { '0.9', 0.9 },
+                { '1.0', 1 },
+            } },
         }
     },
     ['en'] = {
@@ -51,17 +78,17 @@ version = '1.0.0'
 author = 'Icya'
 forumthread = ''
 api_version = 10
-priority = 0                       -- 加载优先级，越低加载越晚，默认为0
+priority = 0                        -- 加载优先级，越低加载越晚，默认为0
 
-dst_compatible = true              -- 联机版适配性
-dont_starve_compatible = false     -- 单机版适配性
-reign_of_giants_compatible = false -- 单机版：巨人国适配性
+dst_compatible = true               -- 联机版适配性
+dont_starve_compatible = false      -- 单机版适配性
+reign_of_giants_compatible = false  -- 单机版：巨人国适配性
 -- all_clients_require_mod = true -- 服务端/所有端模组
-server_only_mod = true             -- 仅服务端模组
+server_only_mod = true              -- 仅服务端模组
 -- client_only_mod = true -- 仅客户端模组
 server_filter_tags = { 'creature' } -- 创意工坊模组分类标签
-icon_atlas = 'modicon.xml'         -- 图集
-icon = 'modicon.tex'               -- 图标
+icon_atlas = 'modicon.xml'          -- 图集
+icon = 'modicon.tex'                -- 图标
 
 -- 以下自动配置
 name = LANGS[cur].name

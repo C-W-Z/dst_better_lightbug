@@ -37,8 +37,12 @@ Assets = {
 
 -- 导入mod配置
 for _, v in ipairs({
-	'_lang',
-
+    '_lang',
+    '_no_feed',
+    '_invincible',
+	'_hp',
+	'_light_range',
+	'_intensity',
 }) do TUNING[string.upper('CONFIG_' .. modid .. v)] = GetModConfigData(modid .. v) end
 
 
@@ -129,3 +133,100 @@ local files_hook = {
 for _, v in ipairs(files_hook) do
 	modimport('scripts/core_' .. modid .. '/hooks/' .. v .. '.lua')
 end
+
+--------------------------------------------------------------------------
+-- 修改球狀光蟲 (lightflier) 本體屬性與行為
+--------------------------------------------------------------------------
+---@param inst ent
+AddPrefabPostInit("lightflier", function(inst)
+    if not TheWorld.ismastersim then return end
+
+    -- 光照範圍修改
+    if inst.Light then
+		inst.Light:SetIntensity(TUNING[string.upper('CONFIG_' .. modid .. '_intensity')])
+        inst.Light:SetRadius(1.8 * TUNING[string.upper('CONFIG_' .. modid .. '_light_range')])
+    end
+
+    -- 血量、無敵、自動回血
+    if inst.components.health then
+        inst.components.health:SetMaxHealth(TUNING[string.upper('CONFIG_' .. modid .. '_hp')])
+
+        if TUNING[string.upper('CONFIG_' .. modid .. '_invincible')] then
+            inst.components.health:SetInvincible(true)
+        end
+
+        -- if REGEN_HP > 0 then
+        --     inst.components.health:StartRegen(REGEN_HP, 1)
+        -- end
+
+        -- 覆寫 CanMurder 方法以禁用背包謀殺
+        -- if DISABLE_MURDER then
+        --     inst.components.health.CanMurder = function(self) return false end
+        -- end
+    end
+
+    -- C. 無需餵食（移除腐爛/餓死組件）
+    if TUNING[string.upper('CONFIG_' .. modid .. '_no_feed')] and inst.components.perishable then
+        inst:RemoveComponent("perishable")
+        inst:RemoveTag("show_spoilage")
+    end
+
+    -- D. 友方保護標籤（防止阿比蓋爾、暗影角鬥士等友方/召喚物攻擊）
+    -- DST 中阿比蓋爾與暗影角鬥士會自動忽略帶有 "companion" 或 "notarget" Tag 的單位
+    -- if FRIENDLY_MODE == 2 then
+    --     inst:AddTag("companion")
+    --     inst:AddTag("notarget")
+    -- elseif FRIENDLY_MODE == 1 then
+    --     -- 僅在進入隊列 (跟隨) 時添加友方標籤
+    --     local follower = inst.components.formationfollower
+    --     if follower then
+    --         local old_onenter = follower.onenterformationfn
+    --         follower.onenterformationfn = function(inst, leader)
+    --             if old_onenter then old_onenter(inst, leader) end
+    --             inst:AddTag("companion")
+    --             inst:AddTag("notarget")
+    --         end
+
+    --         local old_onleave = follower.onleaveformationfn
+    --         follower.onleaveformationfn = function(inst, leader)
+    --             if old_onleave then old_onleave(inst, leader) end
+    --             inst:RemoveTag("companion")
+    --             inst:RemoveTag("notarget")
+    --         end
+    --     end
+    -- end
+end)
+
+--------------------------------------------------------------------------
+-- 修改隊列跟隨上限 (formationleader)
+--------------------------------------------------------------------------
+-- 隊列生成時會建立 formationleader Prefab，並預設 max_formation_size = 3
+-- AddPrefabPostInit("formationleader", function(inst)
+--     if not TheWorld.ismastersim then return end
+
+--     -- 延遲一幀執行，覆寫掉原代碼硬編碼的 3 隻限制
+--     inst:DoTaskInTime(0, function()
+--         if inst.components.formationleader and inst.components.formationleader.formation_type == "lightflier" then
+--             inst.components.formationleader.max_formation_size = MAX_FOLLOW
+--         end
+--     end)
+-- end)
+
+--------------------------------------------------------------------------
+-- 修改非跟隨狀態的遊蕩範圍 (Brain Upvalue 修改)
+--------------------------------------------------------------------------
+-- if WANDER_RADIUS ~= 10 then
+--     local LightFlierBrain = require("brains/lightflierbrain")
+
+--     -- 使用 debug.getupvalue 找出 lightflierbrain 內的局部變量 MAX_WANDER_DIST 並修改
+--     local idx = 1
+--     while true do
+--         local name, value = debug.getupvalue(LightFlierBrain.OnStart, idx)
+--         if not name then break end
+--         if name == "MAX_WANDER_DIST" then
+--             debug.setupvalue(LightFlierBrain.OnStart, idx, WANDER_RADIUS)
+--             break
+--         end
+--         idx = idx + 1
+--     end
+-- end
