@@ -18,6 +18,10 @@ local LANGS = {
                 { 'English', 'en' }
             } },
             { '功能' },
+            { modid .. '_migrate', '光蟲跟隨上下地洞', '跟隨的光蟲會隨你上下地洞', true, {
+                { '禁用', false },
+                { '啟用', true },
+            } },
             { modid .. '_no_feed', '光蟲無需餵食', '', true, {
                 { '禁用', false },
                 { '啟用', true },

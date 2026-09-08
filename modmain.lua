@@ -38,6 +38,7 @@ Assets = {
 -- 导入mod配置
 for _, v in ipairs({
     '_lang',
+    '_migrate',
     '_no_feed',
     '_invincible',
     '_hp',
@@ -149,7 +150,6 @@ if TUNING[string.upper('CONFIG_' .. modid .. '_no_feed')] then
     GLOBAL.MakeFeedableSmallLivestock = function(_inst, starvetime, oninventory, ondropped)
         -- 判斷是否為球狀光蟲
         if _inst.prefab == "lightflier" or _inst:HasTag("lightflier") then
-
             -- 執行 Pristine (添加 small_livestock 標籤等)
             GLOBAL.MakeFeedableSmallLivestockPristine(_inst)
 
@@ -262,4 +262,123 @@ if TUNING[string.upper('CONFIG_' .. modid .. '_wander_range')] ~= 10 then
         end
         idx = idx + 1
     end
+end
+
+-- ==========================================================================
+-- 球狀光蟲 跨世界/上下地洞 跟隨邏輯
+-- ==========================================================================
+if TUNING[string.upper('CONFIG_' .. modid .. '_migrate')] then
+    -- 獲取當前跟隨該玩家的所有光蟲
+    ---comment
+    ---@param player ent
+    ---@return table
+    local function GetFollowingLightfliers(player)
+        local fliers = {}
+        -- 光蟲的隊列隊長實體保存在玩家的 _lightflier_formation 變數中
+        if player._lightflier_formation and player._lightflier_formation:IsValid() then
+            local formationleader = player._lightflier_formation.components.formationleader
+            if formationleader and formationleader.formation then
+                -- 遍歷隊列中的所有光蟲成員
+                for follower, _ in pairs(formationleader.formation) do
+                    if follower and follower:IsValid() then
+                        table.insert(fliers, follower)
+                    end
+                end
+            end
+        end
+        return fliers
+    end
+
+    AddPlayerPostInit(function(inst)
+        if not GLOBAL.TheWorld.ismastersim then return end
+
+        if inst._lightflier_migration_installed then return end
+        inst._lightflier_migration_installed = true
+
+        inst.lightflier_followers = inst.lightflier_followers or {}
+
+        local old_OnDespawn = inst.OnDespawn
+        local old_OnSave = inst.OnSave
+        local old_OnLoad = inst.OnLoad
+
+        -- 1. 玩家即將消失（上下地洞 / 切換地圖 / 下線）
+        inst.OnDespawn = function(_inst, migrationdata, ...)
+            local fliers = GetFollowingLightfliers(_inst)
+
+            for _, follower in ipairs(fliers) do
+                -- 保存光蟲的完整數據（血量、屬性等）
+                local savedata = follower:GetSaveRecord()
+                table.insert(_inst.lightflier_followers, savedata)
+
+                -- 防止在舊世界留存存檔，並順滑銷毀舊實體
+                follower.persists = false
+                follower:AddTag("notarget")
+                follower:AddTag("NOCLICK")
+
+                -- 生成消失特效並清除
+                follower:DoTaskInTime(math.random() * 0.2, function(f)
+                    if f:IsValid() then
+                        local fx = GLOBAL.SpawnPrefab("spawn_fx_small")
+                        if fx then
+                            fx.Transform:SetPosition(f.Transform:GetWorldPosition())
+                        end
+                        f:Remove()
+                    end
+                end)
+            end
+
+            if old_OnDespawn then
+                return old_OnDespawn(_inst, migrationdata, ...)
+            end
+        end
+
+        -- 2. 保存玩家存檔數據
+        inst.OnSave = function(_inst, data, ...)
+            if data then
+                data.lightflier_followers = _inst.lightflier_followers
+            end
+            if old_OnSave then
+                return old_OnSave(_inst, data, ...)
+            end
+        end
+
+        -- 3. 加載新世界（進地洞/出地洞/上線）後恢復光蟲
+        inst.OnLoad = function(_inst, data, ...)
+            if data and data.lightflier_followers and #data.lightflier_followers > 0 then
+                for _, savedata in ipairs(data.lightflier_followers) do
+                    _inst:DoTaskInTime(0.2 * math.random() + 0.1, function()
+                        if not _inst:IsValid() then return end
+
+                        -- 重新生成光蟲
+                        local follower = GLOBAL.SpawnSaveRecord(savedata)
+                        if follower and follower:IsValid() then
+                            -- 移動到玩家身邊
+                            follower.Transform:SetPosition(_inst.Transform:GetWorldPosition())
+
+                            if follower.sg then
+                                follower.sg:GoToState("idle")
+                            end
+
+                            -- 生成出現特效
+                            local fx = GLOBAL.SpawnPrefab("spawn_fx_small")
+                            if fx then
+                                fx.Transform:SetPosition(follower.Transform:GetWorldPosition())
+                            end
+
+                            -- 讓光蟲重新開始尋找跟隨目標 (會在1秒內自動重新與玩家組隊)
+                            if follower.components.formationfollower then
+                                follower.components.formationfollower:StartUpdating()
+                            end
+                        end
+                    end)
+                end
+                -- 清空暫存清單
+                _inst.lightflier_followers = {}
+            end
+
+            if old_OnLoad then
+                return old_OnLoad(_inst, data, ...)
+            end
+        end
+    end)
 end
