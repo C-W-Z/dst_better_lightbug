@@ -16,9 +16,9 @@ rawset(GLOBAL, 'COORDS_betterlb', COORDS_betterlb)
 rawset(GLOBAL, 'SUGAR_betterlb', SUGAR_betterlb)
 
 PrefabFiles = {
-	-- 'betterlb_module_buffs',
-	-- 'betterlb_module_dishes',
-	-- 'betterlb_module_particle',
+    -- 'betterlb_module_buffs',
+    -- 'betterlb_module_dishes',
+    -- 'betterlb_module_particle',
 
 }
 
@@ -40,9 +40,9 @@ for _, v in ipairs({
     '_lang',
     '_no_feed',
     '_invincible',
-	'_hp',
-	'_light_range',
-	'_intensity',
+    '_hp',
+    '_light_range',
+    -- '_intensity',
 }) do TUNING[string.upper('CONFIG_' .. modid .. v)] = GetModConfigData(modid .. v) end
 
 
@@ -110,19 +110,19 @@ modimport('scripts/core_betterlb/managers/_auto_regist_animandtex.lua') -- (必�
 -- 导入 skins
 ---@type string[]
 local skin_files = {
-	-- 'myspear',
+    -- 'myspear',
 }
 for _, v in ipairs(skin_files) do
-	modimport('scripts/core_' .. modid .. '/skins/' .. v .. '.lua')
+    modimport('scripts/core_' .. modid .. '/skins/' .. v .. '.lua')
 end
 
 -- 导入 sg
 ---@type string[]
 local sg_files = {
-	-- blanksg,
+    -- blanksg,
 }
 for _, v in ipairs(sg_files) do
-	modimport('scripts/core_' .. modid .. '/sg/' .. v .. '.lua')
+    modimport('scripts/core_' .. modid .. '/sg/' .. v .. '.lua')
 end
 
 -- 导入钩子 It's my勾
@@ -131,7 +131,45 @@ local files_hook = {
 
 }
 for _, v in ipairs(files_hook) do
-	modimport('scripts/core_' .. modid .. '/hooks/' .. v .. '.lua')
+    modimport('scripts/core_' .. modid .. '/hooks/' .. v .. '.lua')
+end
+
+-- 無需餵食（移除腐爛/餓死組件）
+if TUNING[string.upper('CONFIG_' .. modid .. '_no_feed')] then
+    -- 備份原版函數
+    local old_MakeFeedableSmallLivestock = GLOBAL.MakeFeedableSmallLivestock
+
+    ---覆寫 MakeFeedableSmallLivestock
+    ---@param _inst ent
+    ---@param starvetime any
+    ---@param oninventory any
+    ---@param ondropped any
+    ---@return nil
+    GLOBAL.MakeFeedableSmallLivestock = function(_inst, starvetime, oninventory, ondropped)
+        -- 判斷是否為球狀光蟲
+        if _inst.prefab == "lightflier" or _inst:HasTag("lightflier") then
+
+            -- 執行 Pristine (添加 small_livestock 標籤等)
+            GLOBAL.MakeFeedableSmallLivestockPristine(_inst)
+
+            -- 保留飲食組件
+            if _inst.components.eater == nil then
+                _inst:AddComponent("eater")
+            end
+
+            -- 不調用 MakeSmallPerishableCreature (不添加 perishable)
+            -- 直接把原版的 OnPutInInventory 與 OnDropped 綁定給 inventoryitem
+            if _inst.components.inventoryitem ~= nil then
+                _inst.components.inventoryitem:SetOnPutInInventoryFn(oninventory)
+                _inst.components.inventoryitem:SetOnDroppedFn(ondropped)
+            end
+
+            return
+        end
+
+        -- 其他生物（如高鳥幼崽、兔子等）走原版邏輯
+        return old_MakeFeedableSmallLivestock(_inst, starvetime, oninventory, ondropped)
+    end
 end
 
 --------------------------------------------------------------------------
@@ -143,7 +181,7 @@ AddPrefabPostInit("lightflier", function(inst)
 
     -- 光照範圍修改
     if inst.Light then
-		inst.Light:SetIntensity(TUNING[string.upper('CONFIG_' .. modid .. '_intensity')])
+        -- inst.Light:SetIntensity(TUNING[string.upper('CONFIG_' .. modid .. '_intensity')])
         inst.Light:SetRadius(1.8 * TUNING[string.upper('CONFIG_' .. modid .. '_light_range')])
     end
 
@@ -163,12 +201,6 @@ AddPrefabPostInit("lightflier", function(inst)
         -- if DISABLE_MURDER then
         --     inst.components.health.CanMurder = function(self) return false end
         -- end
-    end
-
-    -- C. 無需餵食（移除腐爛/餓死組件）
-    if TUNING[string.upper('CONFIG_' .. modid .. '_no_feed')] and inst.components.perishable then
-        inst:RemoveComponent("perishable")
-        inst:RemoveTag("show_spoilage")
     end
 
     -- D. 友方保護標籤（防止阿比蓋爾、暗影角鬥士等友方/召喚物攻擊）
