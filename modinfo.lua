@@ -55,17 +55,17 @@ local LANGS = {
             --     { '0.9', 0.9 },
             --     { '1.0', 1 },
             -- } },
-            { modid .. '_wander_range', '野生光蟲遊蕩範圍', '调整野生光蟲遊蕩半徑', 10, {
-                { '0', 0 },
-                { '1', 1 },
-                { '2', 2 },
-                { '3', 3 },
-                { '4', 4 },
-                { '5', 5 },
-                { '10（原版）', 10 },
-                { '15', 15 },
-                { '20', 20 },
-            } },
+            -- { modid .. '_wander_range', '野生光蟲遊蕩範圍', '调整野生光蟲遊蕩半徑', 10, {
+            --     { '0', 0 },
+            --     { '1', 1 },
+            --     { '2', 2 },
+            --     { '3', 3 },
+            --     { '4', 4 },
+            --     { '5', 5 },
+            --     { '10（原版）', 10 },
+            --     { '15', 15 },
+            --     { '20', 20 },
+            -- } },
         }
     },
     ['en'] = {
@@ -103,7 +103,7 @@ reign_of_giants_compatible = false  -- 单机版：巨人国适配性
 -- all_clients_require_mod = true -- 服务端/所有端模组
 server_only_mod = true              -- 仅服务端模组
 -- client_only_mod = true -- 仅客户端模组
-server_filter_tags = { 'creature' } -- 创意工坊模组分类标签
+server_filter_tags = { 'creature', 'tweak' } -- 创意工坊模组分类标签
 icon_atlas = 'modicon.xml'          -- 图集
 icon = 'modicon.tex'                -- 图标
 
