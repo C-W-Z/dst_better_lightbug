@@ -6,31 +6,31 @@ local modid = 'betterlb'
 local LANGS = {
     ['zh'] = {
         name = '更好的球狀光蟲',
-        description = '模板',
+        description = '',
         config = {
             -- {'设置的id','设置的名称','聚焦时显示的提示',默认值,{
             --     {选项一,值},
             --     {选项二,值}
             -- }},
-            { '语言' },
-            { modid .. '_lang', '语言', '语言', 'cn', {
-                { '简体中文', 'cn' },
-                { 'English', 'en' }
-            } },
-            { '功能' },
-            { modid .. '_migrate', '光蟲跟隨上下地洞', '跟隨的光蟲會隨你上下地洞', true, {
+            -- { '语言' },
+            -- { modid .. '_lang', '语言', '语言', 'cn', {
+            --     { '简体中文', 'cn' },
+            --     { 'English', 'en' }
+            -- } },
+            -- { '功能' },
+            { modid .. '_migrate', '光虫跟随上下地洞', '跟随的光虫会随你上下地洞', true, {
                 { '禁用', false },
-                { '啟用', true },
+                { '启用', true },
             } },
-            { modid .. '_no_feed', '光蟲無需餵食', '', true, {
+            { modid .. '_no_feed', '光虫无需喂食', '', true, {
                 { '禁用', false },
-                { '啟用', true },
+                { '启用', true },
             } },
-            { modid .. '_invincible', '光蟲無敵', '', true, {
+            { modid .. '_invincible', '光虫无敌', '', true, {
                 { '禁用', false },
-                { '啟用', true },
+                { '启用', true },
             } },
-            { modid .. '_hp', '光蟲血量', '调整光蟲血量', 25, {
+            { modid .. '_hp', '光虫血量', '调整光虫血量', 25, {
                 { '25（原版）', 25 },
                 { '50', 50 },
                 { '100', 100 },
@@ -38,7 +38,7 @@ local LANGS = {
                 { '500', 500 },
                 { '1000', 1000 },
             } },
-            { modid .. '_light_range', '光蟲光照範圍', '调整光蟲照明半徑', 1, {
+            { modid .. '_light_range', '光虫光照范围', '调整光虫照明半径', 1, {
                 { '1x',   1 },
                 { '1.5x', 1.5 },
                 { '2x',   2 },
@@ -70,42 +70,67 @@ local LANGS = {
     },
     ['en'] = {
         name = 'Better Bulbous Lightbug',
-        description = 'Template',
+        description = '',
         config = {
-            { 'LANGUAGE' },
-            { modid .. '_lang', 'language', 'choose language', 'en', {
-                { '简体中文', 'cn' },
-                { 'English', 'en' }
+            -- { 'LANGUAGE' },
+            -- { modid .. '_lang', 'language', 'choose language', 'en', {
+            --     { '简体中文', 'cn' },
+            --     { 'English', 'en' }
+            -- } },
+            -- { 'FUNCTIONS' },
+            { modid .. '_migrate', 'Lightbug Caves Migration',
+                'Following Lightbugs will travel with you between caves and surface', true, {
+                { 'Disabled', false },
+                { 'Enabled',  true },
             } },
-            { 'FUNCTIONS' },
-            -- {modid..'_dmgmult','Damage Mult','Damage Mult Settings',{
-            --     {'x0.5',0.5},
-            --     {'x1',1},
-            --     {'x2',2}
-            -- }}
+            { modid .. '_no_feed', 'No Feeding Required', '', true, {
+                { 'Disabled', false },
+                { 'Enabled',  true },
+            } },
+            { modid .. '_invincible', 'Invincible Lightbugs', '', true, {
+                { 'Disabled', false },
+                { 'Enabled',  true },
+            } },
+            { modid .. '_hp', 'Lightbug Health', 'Adjust Lightbug max health', 25, {
+                { '25 (Default)', 25 },
+                { '50',           50 },
+                { '100',          100 },
+                { '250',          250 },
+                { '500',          500 },
+                { '1000',         1000 },
+            } },
+            { modid .. '_light_range', 'Light Radius Multiplier', 'Adjust Lightbug light radius', 1, {
+                { '1x',   1 },
+                { '1.5x', 1.5 },
+                { '2x',   2 },
+                { '2.5x', 2.5 },
+                { '3x',   3 },
+                { '4x',   4 },
+                { '5x',   5 },
+            } },
         }
     }
 }
 
 -- 决定当前用的语言
-local cur = (locale == 'zh' or locale == 'zhr') and 'zh' or 'en'
+local cur = (locale == 'zh' or locale == 'zhr' or locale == 'zht') and 'zh' or 'en'
 
 -- mod相关信息
 version = '1.0.0'
 author = 'Icya'
 forumthread = ''
 api_version = 10
-priority = 0                        -- 加载优先级，越低加载越晚，默认为0
+priority = 0                                 -- 加载优先级，越低加载越晚，默认为0
 
-dst_compatible = true               -- 联机版适配性
-dont_starve_compatible = false      -- 单机版适配性
-reign_of_giants_compatible = false  -- 单机版：巨人国适配性
+dst_compatible = true                        -- 联机版适配性
+dont_starve_compatible = false               -- 单机版适配性
+reign_of_giants_compatible = false           -- 单机版：巨人国适配性
 -- all_clients_require_mod = true -- 服务端/所有端模组
-server_only_mod = true              -- 仅服务端模组
+server_only_mod = true                       -- 仅服务端模组
 -- client_only_mod = true -- 仅客户端模组
 server_filter_tags = { 'creature', 'tweak' } -- 创意工坊模组分类标签
-icon_atlas = 'modicon.xml'          -- 图集
-icon = 'modicon.tex'                -- 图标
+icon_atlas = 'modicon.xml'                   -- 图集
+icon = 'modicon.tex'                         -- 图标
 
 -- 以下自动配置
 name = LANGS[cur].name
