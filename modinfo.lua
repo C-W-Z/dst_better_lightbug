@@ -38,6 +38,17 @@ local LANGS = {
                 { '500', 500 },
                 { '1000', 1000 },
             } },
+            { modid .. '_regen_hp', '每秒回血量', '调整光虫每秒自動回復最大生命值多少比例的血量', 0, {
+                { '0%（原版）', 0 },
+                { '1%', 0.01 },
+                { '2%', 0.02 },
+                { '3%', 0.03 },
+                { '4%', 0.04 },
+                { '5%', 0.05 },
+                { '10%', 0.1 },
+                { '25%', 0.25 },
+                { '50%', 0.5 },
+            } },
             { modid .. '_light_range', '光虫光照范围', '调整光虫照明半径', 1, {
                 { '1x',   1 },
                 { '1.5x', 1.5 },
@@ -55,6 +66,17 @@ local LANGS = {
             --     { '0.9', 0.9 },
             --     { '1.0', 1 },
             -- } },
+            { modid .. '_max_follow', '最大跟隨數量', '调整最多可以有幾隻光蟲跟隨玩家', 3, {
+                { '1', 1 },
+                { '2', 2 },
+                { '3（原版）', 3 },
+                { '4', 4 },
+                { '5', 5 },
+                { '6', 6 },
+                { '7', 7 },
+                { '8', 8 },
+                { '9', 9 },
+            } },
             -- { modid .. '_wander_range', '野生光蟲遊蕩範圍', '调整野生光蟲遊蕩半徑', 10, {
             --     { '0', 0 },
             --     { '1', 1 },
@@ -92,12 +114,23 @@ local LANGS = {
                 { 'Enabled',  true },
             } },
             { modid .. '_hp', 'Lightbug Health', 'Adjust Lightbug max health', 25, {
-                { '25 (Default)', 25 },
+                { '25 (Vanilla)', 25 },
                 { '50',           50 },
                 { '100',          100 },
                 { '250',          250 },
                 { '500',          500 },
                 { '1000',         1000 },
+            } },
+            { modid .. '_regen_hp', 'Health Regen per second', 'Adjust the percentage of maximum health that Lightbugs automatically regenerate per second', 0, {
+                { '0% (Vanilla)', 0 },
+                { '1%', 0.01 },
+                { '2%', 0.02 },
+                { '3%', 0.03 },
+                { '4%', 0.04 },
+                { '5%', 0.05 },
+                { '10%', 0.1 },
+                { '25%', 0.25 },
+                { '50%', 0.5 },
             } },
             { modid .. '_light_range', 'Light Radius Multiplier', 'Adjust Lightbug light radius', 1, {
                 { '1x',   1 },
@@ -108,6 +141,17 @@ local LANGS = {
                 { '4x',   4 },
                 { '5x',   5 },
             } },
+            { modid .. '_max_follow', 'Maximum Following Lightbugs', 'Adjust the maximum number of Lightbugs that can follow you', 3, {
+                { '1', 1 },
+                { '2', 2 },
+                { '3 (Vanilla)', 3 },
+                { '4', 4 },
+                { '5', 5 },
+                { '6', 6 },
+                { '7', 7 },
+                { '8', 8 },
+                { '9', 9 },
+            } },
         }
     }
 }
@@ -116,7 +160,7 @@ local LANGS = {
 local cur = (locale == 'zh' or locale == 'zhr' or locale == 'zht') and 'zh' or 'en'
 
 -- mod相关信息
-version = '1.0.0'
+version = '1.1.0'
 author = 'Icya'
 forumthread = ''
 api_version = 10

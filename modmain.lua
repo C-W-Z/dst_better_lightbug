@@ -23,16 +23,22 @@ Assets = {
 for _, v in ipairs({
     '_lang',
     '_migrate',
-    '_no_feed',
+    -- '_no_feed',
     '_invincible',
-    '_hp',
+    -- '_hp',
+    -- '_regen_hp',
     '_light_range',
     -- '_intensity',
+    '_max_follow',
     -- '_wander_range',
 }) do TUNING[string.upper('CONFIG_' .. modid .. v)] = GetModConfigData(modid .. v) end
 
+local NO_FEED = GetModConfigData(modid .. '_no_feed')
+local MAX_HP = GetModConfigData(modid .. '_hp')
+local REGEN_HP = GetModConfigData(modid .. '_regen_hp')
+
 -- 無需餵食（移除腐爛/餓死組件）
-if TUNING[string.upper('CONFIG_' .. modid .. '_no_feed')] then
+if NO_FEED then
     -- 備份原版函數
     local old_MakeFeedableSmallLivestock = GLOBAL.MakeFeedableSmallLivestock
 
@@ -83,15 +89,15 @@ AddPrefabPostInit("lightflier", function(inst)
 
     -- 血量、無敵、自動回血
     if inst.components.health then
-        inst.components.health:SetMaxHealth(TUNING[string.upper('CONFIG_' .. modid .. '_hp')])
+        inst.components.health:SetMaxHealth(MAX_HP)
 
         if TUNING[string.upper('CONFIG_' .. modid .. '_invincible')] then
             inst.components.health:SetInvincible(true)
         end
 
-        -- if REGEN_HP > 0 then
-        --     inst.components.health:StartRegen(REGEN_HP, 1)
-        -- end
+        if REGEN_HP > 0 then
+            inst.components.health:StartRegen(REGEN_HP * MAX_HP, 1)
+        end
     end
 
     -- D. 友方保護標籤（防止阿比蓋爾、暗影角鬥士等友方/召喚物攻擊）
@@ -124,16 +130,16 @@ end)
 -- 修改隊列跟隨上限 (formationleader)
 --------------------------------------------------------------------------
 -- 隊列生成時會建立 formationleader Prefab，並預設 max_formation_size = 3
--- AddPrefabPostInit("formationleader", function(inst)
---     if not TheWorld.ismastersim then return end
+AddPrefabPostInit("formationleader", function(inst)
+    if not TheWorld.ismastersim then return end
 
---     -- 延遲一幀執行，覆寫掉原代碼硬編碼的 3 隻限制
---     inst:DoTaskInTime(0, function()
---         if inst.components.formationleader and inst.components.formationleader.formation_type == "lightflier" then
---             inst.components.formationleader.max_formation_size = MAX_FOLLOW
---         end
---     end)
--- end)
+    -- 延遲一幀執行，覆寫掉原代碼硬編碼的 3 隻限制
+    inst:DoTaskInTime(0, function()
+        if inst.components.formationleader and inst.components.formationleader.formation_type == "lightflier" then
+            inst.components.formationleader.max_formation_size = TUNING[string.upper('CONFIG_' .. modid .. '_max_follow')]
+        end
+    end)
+end)
 
 --------------------------------------------------------------------------
 -- 修改非跟隨狀態的遊蕩範圍 (Brain Upvalue 修改)
