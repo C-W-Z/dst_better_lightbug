@@ -5,8 +5,8 @@ local op = { { 'A', 97 }, { 'B', 98 }, { 'C', 99 }, { 'D', 100 }, { 'E', 101 }, 
 local modid = 'betterlb'
 local LANGS = {
     ['zh'] = {
-        name = '更好的球狀光蟲',
-        description = '',
+        name = '更好的球状光虫',
+        description = '详细功能请查看模组设置',
         config = {
             -- {'设置的id','设置的名称','聚焦时显示的提示',默认值,{
             --     {选项一,值},
@@ -92,7 +92,7 @@ local LANGS = {
     },
     ['en'] = {
         name = 'Better Bulbous Lightbug',
-        description = '',
+        description = 'For details, please see the mod settings.',
         config = {
             -- { 'LANGUAGE' },
             -- { modid .. '_lang', 'language', 'choose language', 'en', {
