@@ -7,39 +7,31 @@ local modid = 'betterlb' -- 定义唯一modid
 
 GLOBAL.BETTERLB_API = env
 
-PrefabFiles = {
-    -- 'betterlb_module_buffs',
-    -- 'betterlb_module_dishes',
-    -- 'betterlb_module_particle',
-
-}
+PrefabFiles = {}
 
 ---@type asset[]
-Assets = {
-
-}
+Assets = {}
 
 -- 导入mod配置
-for _, v in ipairs({
-    '_lang',
-    '_migrate',
-    -- '_no_feed',
-    '_invincible',
-    -- '_hp',
-    -- '_regen_hp',
-    '_light_range',
-    -- '_intensity',
-    '_max_follow',
-    -- '_wander_range',
-}) do TUNING[string.upper('CONFIG_' .. modid .. v)] = GetModConfigData(modid .. v) end
-
+local MIGRATE = GetModConfigData(modid .. '_migrate')
 local NO_FEED = GetModConfigData(modid .. '_no_feed')
+local INVINCIBLE = GetModConfigData(modid .. '_invincible')
 local MAX_HP = GetModConfigData(modid .. '_hp')
 local REGEN_HP = GetModConfigData(modid .. '_regen_hp')
+local LIGHT_RANGE = GetModConfigData(modid .. '_light_range')
+local MAX_FOLLOW = GetModConfigData(modid .. '_max_follow')
+
+local W_INVINCIBLE = GetModConfigData(modid .. '_w_invincible')
+local W_MAX_HP = GetModConfigData(modid .. '_w_hp')
+local W_REGEN_HP = GetModConfigData(modid .. '_w_regen_hp')
+local W_LIGHT_RANGE = GetModConfigData(modid .. '_w_light_range')
+local W_MAX_FOLLOW = GetModConfigData(modid .. '_w_max_follow')
+local W_LIFETIME = GetModConfigData(modid .. '_w_lifetime')
 
 -- 無需餵食（移除腐爛/餓死組件）
 if NO_FEED then
     -- 備份原版函數
+    -- 這裡GLOBAL似乎是必要的
     local old_MakeFeedableSmallLivestock = GLOBAL.MakeFeedableSmallLivestock
 
     ---覆寫 MakeFeedableSmallLivestock
@@ -77,21 +69,22 @@ end
 --------------------------------------------------------------------------
 -- 修改球狀光蟲 (lightflier) 本體屬性與行為
 --------------------------------------------------------------------------
----@param inst ent
 AddPrefabPostInit("lightflier", function(inst)
     if not TheWorld.ismastersim then return end
 
     -- 光照範圍修改
-    if inst.Light then
+    if LIGHT_RANGE and inst.Light then
         -- inst.Light:SetIntensity(TUNING[string.upper('CONFIG_' .. modid .. '_intensity')])
-        inst.Light:SetRadius(1.8 * TUNING[string.upper('CONFIG_' .. modid .. '_light_range')])
+        inst.Light:SetRadius(1.8 * LIGHT_RANGE)
     end
 
     -- 血量、無敵、自動回血
     if inst.components.health then
-        inst.components.health:SetMaxHealth(MAX_HP)
+        if MAX_HP then
+            inst.components.health:SetMaxHealth(MAX_HP)
+        end
 
-        if TUNING[string.upper('CONFIG_' .. modid .. '_invincible')] then
+        if INVINCIBLE then
             inst.components.health:SetInvincible(true)
         end
 
@@ -99,46 +92,83 @@ AddPrefabPostInit("lightflier", function(inst)
             inst.components.health:StartRegen(REGEN_HP * MAX_HP, 1)
         end
     end
-
-    -- D. 友方保護標籤（防止阿比蓋爾、暗影角鬥士等友方/召喚物攻擊）
-    -- DST 中阿比蓋爾與暗影角鬥士會自動忽略帶有 "companion" 或 "notarget" Tag 的單位
-    -- if FRIENDLY_MODE == 2 then
-    --     inst:AddTag("companion")
-    --     inst:AddTag("notarget")
-    -- elseif FRIENDLY_MODE == 1 then
-    --     -- 僅在進入隊列 (跟隨) 時添加友方標籤
-    --     local follower = inst.components.formationfollower
-    --     if follower then
-    --         local old_onenter = follower.onenterformationfn
-    --         follower.onenterformationfn = function(inst, leader)
-    --             if old_onenter then old_onenter(inst, leader) end
-    --             inst:AddTag("companion")
-    --             inst:AddTag("notarget")
-    --         end
-
-    --         local old_onleave = follower.onleaveformationfn
-    --         follower.onleaveformationfn = function(inst, leader)
-    --             if old_onleave then old_onleave(inst, leader) end
-    --             inst:RemoveTag("companion")
-    --             inst:RemoveTag("notarget")
-    --         end
-    --     end
-    -- end
 end)
+
+-- 沃姆伍德的版本
+AddPrefabPostInit("wormwood_lightflier", function(inst)
+    if not TheWorld.ismastersim then return end
+
+    -- 光照範圍修改
+    if W_LIGHT_RANGE and inst.Light then
+        -- inst.Light:SetIntensity(TUNING[string.upper('CONFIG_' .. modid .. '_intensity')])
+        inst.Light:SetRadius(1.8 * W_LIGHT_RANGE)
+    end
+
+    -- 血量、無敵、自動回血
+    if inst.components.health then
+        if W_MAX_HP then
+            inst.components.health:SetMaxHealth(W_MAX_HP)
+        end
+
+        if W_INVINCIBLE then
+            inst.components.health:SetInvincible(true)
+        end
+
+        if W_REGEN_HP > 0 then
+            inst.components.health:StartRegen(W_REGEN_HP * W_MAX_HP, 1)
+        end
+    end
+end)
+
+if W_LIFETIME then
+    TUNING.WORMWOOD_PET_LIGHTFLIER_LIFETIME = W_LIFETIME
+end
 
 --------------------------------------------------------------------------
 -- 修改隊列跟隨上限 (formationleader)
 --------------------------------------------------------------------------
--- 隊列生成時會建立 formationleader Prefab，並預設 max_formation_size = 3
-AddPrefabPostInit("formationleader", function(inst)
+if MAX_FOLLOW then
+    -- 隊列生成時會建立 formationleader Prefab，並預設 max_formation_size = 3
+    AddPrefabPostInit("formationleader", function(inst)
+        if not TheWorld.ismastersim then return end
+
+        -- 延遲一幀執行，覆寫掉原代碼硬編碼的 3 隻限制
+        inst:DoTaskInTime(0, function()
+            if inst.components.formationleader and inst.components.formationleader.formation_type == "lightflier" then
+                inst.components.formationleader.max_formation_size = MAX_FOLLOW
+            end
+        end)
+    end)
+end
+
+-- 攔截植物人，覆寫硬編碼的重算邏輯與寵物上限
+AddPrefabPostInit("wormwood", function(inst)
     if not TheWorld.ismastersim then return end
 
-    -- 延遲一幀執行，覆寫掉原代碼硬編碼的 3 隻限制
-    inst:DoTaskInTime(0, function()
-        if inst.components.formationleader and inst.components.formationleader.formation_type == "lightflier" then
-            inst.components.formationleader.max_formation_size = TUNING[string.upper('CONFIG_' .. modid .. '_max_follow')]
+    -- 確保 petleash 吃到新的上限 (防止 TUNING 載入順序問題)
+    if W_MAX_FOLLOW and inst.components.petleash then
+        inst.components.petleash:SetMaxPetsForPrefab("wormwood_lightflier", W_MAX_FOLLOW)
+    end
+
+    -- 覆寫植物人身上的光蟲重算函數，移除原本硬編碼的 1.8
+    if W_LIGHT_RANGE then
+        ---@param _inst ent
+        inst.RecalculateLightFlierLight = function(_inst)
+            local pets = _inst.components.petleash and _inst.components.petleash:GetPetsWithPrefab("wormwood_lightflier") or
+                nil
+            if pets == nil then return end
+
+            -- 使用新的 TUNING 上限來計算倍率 (數量越多，範圍越大的機制)
+            local mult = Remap(#pets, 1, TUNING.WORMWOOD_PET_LIGHTFLIER_LIMIT, 1, 2)
+
+            for i, pet in ipairs(pets) do
+                if pet.Light then
+                    -- 將硬編碼的 1.8 改為我們的自定義基礎半徑
+                    pet.Light:SetRadius(W_LIGHT_RANGE * mult)
+                end
+            end
         end
-    end)
+    end
 end)
 
 --------------------------------------------------------------------------
@@ -163,9 +193,8 @@ end)
 -- ==========================================================================
 -- 球狀光蟲 跨世界/上下地洞 跟隨邏輯
 -- ==========================================================================
-if TUNING[string.upper('CONFIG_' .. modid .. '_migrate')] then
+if MIGRATE then
     -- 獲取當前跟隨該玩家的所有光蟲
-    ---comment
     ---@param player ent
     ---@return table
     local function GetFollowingLightfliers(player)
@@ -186,7 +215,7 @@ if TUNING[string.upper('CONFIG_' .. modid .. '_migrate')] then
     end
 
     AddPlayerPostInit(function(inst)
-        if not GLOBAL.TheWorld.ismastersim then return end
+        if not TheWorld.ismastersim then return end
 
         if inst._lightflier_migration_installed then return end
         inst._lightflier_migration_installed = true
@@ -214,7 +243,7 @@ if TUNING[string.upper('CONFIG_' .. modid .. '_migrate')] then
                 -- 生成消失特效並清除
                 follower:DoTaskInTime(math.random() * 0.2, function(f)
                     if f:IsValid() then
-                        local fx = GLOBAL.SpawnPrefab("spawn_fx_small")
+                        local fx = SpawnPrefab("spawn_fx_small")
                         if fx then
                             fx.Transform:SetPosition(f.Transform:GetWorldPosition())
                         end
@@ -246,7 +275,7 @@ if TUNING[string.upper('CONFIG_' .. modid .. '_migrate')] then
                         if not _inst:IsValid() then return end
 
                         -- 重新生成光蟲
-                        local follower = GLOBAL.SpawnSaveRecord(savedata)
+                        local follower = SpawnSaveRecord(savedata)
                         if follower and follower:IsValid() then
                             -- 移動到玩家身邊
                             follower.Transform:SetPosition(_inst.Transform:GetWorldPosition())
@@ -256,7 +285,7 @@ if TUNING[string.upper('CONFIG_' .. modid .. '_migrate')] then
                             end
 
                             -- 生成出現特效
-                            local fx = GLOBAL.SpawnPrefab("spawn_fx_small")
+                            local fx = SpawnPrefab("spawn_fx_small")
                             if fx then
                                 fx.Transform:SetPosition(follower.Transform:GetWorldPosition())
                             end
