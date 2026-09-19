@@ -118,11 +118,13 @@ AddPrefabPostInit("wormwood_lightflier", function(inst)
             inst.components.health:StartRegen(W_REGEN_HP * W_MAX_HP, 1)
         end
     end
-end)
 
-if W_LIFETIME then
-    TUNING.WORMWOOD_PET_LIGHTFLIER_LIFETIME = W_LIFETIME
-end
+    -- 存活時間
+    if W_LIFETIME and inst.components.timer and inst.components.timer:TimerExists("finish_transformed_life") then
+        inst.components.timer:StopTimer("finish_transformed_life")
+        inst.components.timer:StartTimer("finish_transformed_life", W_LIFETIME * TUNING.TOTAL_DAY_TIME)
+    end
+end)
 
 --------------------------------------------------------------------------
 -- 修改隊列跟隨上限 (formationleader)
